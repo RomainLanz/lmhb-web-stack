@@ -1,6 +1,15 @@
 import { createServer } from 'http'
 
-createServer((request, response) => {
+function readableToString(readable) {
+  return new Promise((resolve, reject) => {
+    let data = ''
+    readable.on('data', (chunk) => data += chunk)
+    readable.on('end', () => resolve(data))
+    readable.on('error', (err) => reject(err))
+  })
+}
+
+createServer(async (request, response) => {
   const url = request.url
   const method = request.method
 
@@ -18,18 +27,13 @@ createServer((request, response) => {
 
   if (method === 'POST') {
     if (url === '/') {
-      let data = ''
-      request.on('data', (chunk) => data += chunk)
-      request.on('end', () => {
-        console.log(data)
-        response.writeHead(302, {
-          'Location': '/'
-        })
-
-        return response.end()
+      const data = await readableToString(request)
+      console.log(data)
+      
+      response.writeHead(302, {
+        'Location': '/'
       })
-
-      // Et si pas de payload?
+      return response.end()
     }
   }
 
